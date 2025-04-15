@@ -122,7 +122,6 @@ void PrintHelp()
     cout << "   -b thread_count         Set this to your number of CPU 'cores' for best performance (default = 4)" << endl;
     cout << "   -c cache_folder_path    (default = cache folder in the current directory)" << endl;
     cout << "" << endl;
-    cout << "   -e: close the program immediately after completion" << endl;
     cout << "   -d: print debug information" << endl;
     cout << "" << endl;
     cout << "Press Enter to continue..." << endl;
@@ -140,7 +139,6 @@ int main(int argc, char* argv[])
     string format = "Vorbis";
     int quality = 0;
     int threadCount = 4;
-    bool exitImmediately = false;
     bool debug = false;
 
     for (int i = 1; i < argc; ++i)
@@ -198,9 +196,6 @@ int main(int argc, char* argv[])
                     ++i;  // Move to the next argument
                 }
                 break;
-            case 'e':
-                exitImmediately = true;
-                break;
             case 'd':
                 debug = true;
                 break;
@@ -228,8 +223,13 @@ int main(int argc, char* argv[])
     }
 
     FSBANK_RESULT result = FSBank_Init(FSBANK_FSBVERSION_FSB5, FSBANK_INIT_NORMAL, threadCount, cachePathC);
-    cout << "FSBank Init:-  ";
-    cout << FSBankResultToString(result) << endl;
+    if (result != FSBANK_OK) {
+        cerr << "FSBank initialization failed: " + FSBankResultToString(result) << endl;
+        exit(2);
+        //throw std::runtime_error("FSBank initialization failed: " + FSBankResultToString(result));
+    }
+    //cout << "FSBank Init:-  ";
+    //cout << FSBankResultToString(result) << endl;
 
     FSBANK_SUBSOUND subsound = { NULL };
     subsound.fileNames = &audioPathC;
@@ -238,12 +238,17 @@ int main(int argc, char* argv[])
     subsound.desiredSampleRate = 0;
     subsound.numFiles = 1;
     const FSBANK_SUBSOUND* newSubsound = &subsound;
-    cout << "Subsound assigned  " << endl;
+    //cout << "Subsound assigned" << endl;
 
     string completePath = (filesystem::path(outputPath) / (audioName + ".fsb")).string();
     result = FSBank_Build(newSubsound, 1, formatEnum, FSBANK_BUILD_DEFAULT | FSBANK_BUILD_DONTLOOP, quality, NULL, completePath.c_str());
-    cout << "FSBank Build:-     ";
-    cout << FSBankResultToString(result) << endl;
+    if (result != FSBANK_OK) {
+        cerr << "FSBank building failed: " + FSBankResultToString(result) << endl;
+        exit(3);
+        //throw std::runtime_error("FSBank building failed: " + FSBankResultToString(result));
+    }
+    //cout << "FSBank Build:-  ";
+    //cout << FSBankResultToString(result) << endl;
 
     if (debug)
     {
@@ -260,11 +265,6 @@ int main(int argc, char* argv[])
         cout << "" << endl;
     }
 
-
-    if (!exitImmediately)
-    {
-        cout << "Press Enter to continue...";
-        cin.get();
-    }
+    cout << "Done: " << audioName << endl;
     return 0;
 }
