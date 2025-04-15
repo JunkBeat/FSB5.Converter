@@ -16,6 +16,5 @@ Optional arguments:
    -b thread_count         Set this to your number of CPU 'cores' for best performance (default = 4)
    -c cache_folder_path    (default = cache folder in the current directory)
 
-   -e: close the program immediately after completion
    -d: print debug information
 ```
